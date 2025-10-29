@@ -6,15 +6,41 @@ jobs:
       - image: cimg/python:3.11
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "requirements.txt" }}
+            - v1-dependencies-
+      - run:
+          name: Install dependencies
+          command: |
+            pip install -r requirements.txt
+      - save_cache:
+          key: v1-dependencies-{{ checksum "requirements.txt" }}
+          paths:
+            - ~/.cache/pip
+      - run:
+          name: Run tests
+          command: pytest
+
+  lint:
+    docker:
+      - image: cimg/python:3.11
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "requirements.txt" }}
+            - v1-dependencies-
       - run:
           name: Install dependencies
           command: pip install -r requirements.txt
       - run:
-          name: Run tests
-          command: pytest
+          name: Check code formatting
+          command: black --check .
 
 workflows:
   version: 2
   build-and-test:
     jobs:
       - test
+      - lint
